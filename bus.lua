@@ -1,17 +1,17 @@
--- Car profile
+-- Bus profile
 
 local find_access_tag = require("lib/access").find_access_tag
 
 -- Begin of globals
-barrier_whitelist = { ["cattle_grid"] = true, ["border_control"] = true, ["checkpoint"] = true, ["toll_booth"] = true, ["sally_port"] = true, ["gate"] = true, ["lift_gate"] = true, ["no"] = true, ["entrance"] = true }
-access_tag_whitelist = { ["yes"] = true, ["motorcar"] = true, ["motor_vehicle"] = true, ["vehicle"] = true, ["permissive"] = true, ["designated"] = true }
-access_tag_blacklist = { ["no"] = true, ["private"] = true, ["agricultural"] = true, ["forestry"] = true, ["emergency"] = true, ["psv"] = true }
-access_tag_restricted = { ["destination"] = true, ["delivery"] = true }
-access_tags = { "motorcar", "motor_vehicle", "vehicle" }
+barrier_whitelist = { ["cattle_grid"] = true,["busway"] = true,["bus_trap"] = true, ["border_control"] = true, ["bus"] = true, ["psv"] = true, ["checkpoint"] = true, ["toll_booth"] = true, ["sally_port"] = true, ["gate"] = true, ["lift_gate"] = true, ["no"] = true, ["entrance"] = true }
+access_tag_whitelist = { ["yes"] = true, ["busway"] = true, ["bus"] = true, ["psv"] = true,  ["motorcar"] = true, ["motor_vehicle"] = true, ["vehicle"] = true, ["permissive"] = true, ["designated"] = true }
+access_tag_blacklist = { }
+access_tag_restricted = {  }
+access_tags = { "motorcar", "motor_vehicle", "vehicle","bus" }
 access_tags_hierachy = { "motorcar", "motor_vehicle", "vehicle", "access" }
-service_tag_restricted = { ["parking_aisle"] = true }
+service_tag_restricted = { }
 ignore_in_grid = { ["ferry"] = true }
-restriction_exception_tags = { "motorcar", "motor_vehicle", "vehicle" }
+restriction_exception_tags = { "bus","motorcar", "motor_vehicle", "vehicle" }
 
 speed_profile = {
   ["motorway"] = 90,
@@ -133,9 +133,9 @@ traffic_signal_penalty          = 2
 use_turn_restrictions           = true
 
 local obey_oneway               = true
-local obey_bollards             = true
-local ignore_areas              = true
-local u_turn_penalty            = 20
+local obey_bollards             = false
+local ignore_areas              = false
+local u_turn_penalty            = 3
 
 local abs = math.abs
 local min = math.min
@@ -212,6 +212,11 @@ end
 
 function way_function (way, result)
   local highway = way:get_value_by_key("highway")
+  local busway = way:get_value_by_key("busway")
+  local busway_left = way:get_value_by_key("busway:left")
+  local busway_right = way:get_value_by_key("busway:right")
+  local bus_lanes_backward = way:get_value_by_key("bus:lanes:backward")
+  local psv = way:get_value_by_key("psv")
   local route = way:get_value_by_key("route")
   local bridge = way:get_value_by_key("bridge")
 
@@ -370,12 +375,16 @@ function way_function (way, result)
   if obey_oneway then
     if oneway == "-1" then
       result.forward_mode = 0
-    elseif oneway == "yes" or
-    oneway == "1" or
-    oneway == "true" or
-    junction == "roundabout" or
-    (highway == "motorway_link" and oneway ~="no") or
-    (highway == "motorway" and oneway ~= "no") then
+    elseif (busway=="opposite_lane" or bus_lanes_backward =="designated" or busway_left == "opposite_lane" or busway_right == "opposite_lane")
+            then
+             result.backward_mode = 1
+    elseif (oneway == "yes" or
+            oneway == "1" or
+            oneway == "true" or
+            junction == "roundabout" or
+            (highway == "motorway_link" and oneway ~="no") or
+            (highway == "motorway" and oneway ~= "no") )
+    then
       result.backward_mode = 0
     end
   end
@@ -431,4 +440,3 @@ function way_function (way, result)
     result.backward_speed = math.min(penalized_speed, scaled_speed)
   end
 end
-
