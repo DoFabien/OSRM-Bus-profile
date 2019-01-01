@@ -404,7 +404,7 @@ function way_function (way, result)
 
   -- Override general direction settings of there is a specific one for our mode of travel
   if ignore_in_grid[highway] then
-    result.ignore_in_grid = true
+    -- result.ignore_in_grid = true
   end
 
   local width = math.huge
