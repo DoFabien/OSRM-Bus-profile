@@ -11,7 +11,6 @@ limit = require("lib/maxspeed").limit
 Utils = require("lib/utils")
 Measure = require("lib/measure")
 
-
 function setup()
   return {
     properties = {
@@ -23,29 +22,29 @@ function setup()
       -- For shortest distance without penalties for accessibility
       -- weight_name                     = 'distance',
       process_call_tagless_node      = false,
-      u_turn_penalty                 = 80,
+      u_turn_penalty                 = 20,
       continue_straight_at_waypoint  = true,
       use_turn_restrictions          = true,
       left_hand_driving              = false,
-      traffic_light_penalty          = 3,
+      traffic_light_penalty          = 2,
     },
 
     default_mode              = mode.driving,
     default_speed             = 10,
     oneway_handling           = true,
     side_road_multiplier      = 0.8,
-    turn_penalty              = 7,
+    turn_penalty              = 7.5,
     speed_reduction           = 0.8,
     turn_bias                 = 1.075,
     cardinal_directions       = false,
 
     -- Size of the vehicle, to be limited by physical restriction of the way
-    vehicle_height = 3.5, -- in meters, 2.5m is the height of van
-    vehicle_width = 2, -- in meters, ways with narrow tag are considered narrower than 2.2m
+    vehicle_height = 2.5, -- in meters, 2.5m is the height of van
+    vehicle_width = 1.9, -- in meters, ways with narrow tag are considered narrower than 2.2m
 
     -- Size of the vehicle, to be limited mostly by legal restriction of the way
-    vehicle_length = 9, -- in meters, 4.8m is the length of large or familly car
-    vehicle_weight = 19000, -- in kilograms
+    vehicle_length = 4.8, -- in meters, 4.8m is the length of large or familly car
+    vehicle_weight = 3500, -- in kilograms
 
     -- a list of suffixes to suppress in name change instructions. The suffixes also include common substrings of each other
     suffix_list = {
@@ -61,21 +60,17 @@ function setup()
       'lift_gate',
       'no',
       'entrance',
-      'height_restrictor',
-      'bus_trap' --bus_trap is not a trap for busses!
+      'height_restrictor'
     },
 
     access_tag_whitelist = Set {
       'yes',
-      'destination',
       'motorcar',
       'motor_vehicle',
       'vehicle',
       'permissive',
       'designated',
-      --    'hov'
-      'psv', --added
-      'bus' --added
+      'hov'
     },
 
     access_tag_blacklist = Set {
@@ -83,7 +78,7 @@ function setup()
       'agricultural',
       'forestry',
       'emergency',
-      --    'psv' --removed
+      'psv',
       'customers',
       'private',
       'delivery',
@@ -92,9 +87,7 @@ function setup()
 
     -- tags disallow access to in combination with highway=service
     service_access_tag_blacklist = Set {
-        'private',
-        'delivery',
-        'destination'
+        'private'
     },
 
     restricted_access_tag_list = Set {
@@ -105,9 +98,7 @@ function setup()
     },
 
     access_tags_hierarchy = Sequence {
-      -- 'bus', --added
-      'psv', --added
-      -- 'motorcar',
+      'motorcar',
       'motor_vehicle',
       'vehicle',
       'access'
@@ -118,9 +109,7 @@ function setup()
     },
 
     restrictions = Sequence {
-      --    'motorcar',
-      -- 'bus', --added
-      'psv', --added
+      'motorcar',
       'motor_vehicle',
       'vehicle'
     },
@@ -159,8 +148,8 @@ function setup()
         secondary_link  = 25,
         tertiary        = 40,
         tertiary_link   = 20,
-        unclassified    = 15,
-        residential     = 15,
+        unclassified    = 25,
+        residential     = 25,
         living_street   = 10,
         service         = 15
       }
@@ -409,11 +398,10 @@ function process_way(profile, way, result, relations)
 
     -- determine access status by checking our hierarchy of
     -- access tags, e.g: motorcar, motor_vehicle, vehicle
-    WayHandlers.bus_access,
-    WayHandlers.handle_bus_oneway,
+    WayHandlers.access,
 
     -- check whether forward/backward directions are routable
-    -- WayHandlers.oneway,
+    WayHandlers.oneway,
 
     -- check a road's destination
     WayHandlers.destinations,
@@ -462,8 +450,6 @@ function process_way(profile, way, result, relations)
       Relations.process_way_refs(way, relations, result)
   end
 end
-
-
 
 function process_turn(profile, turn)
   -- Use a sigmoid function to return a penalty that maxes out at turn_penalty
